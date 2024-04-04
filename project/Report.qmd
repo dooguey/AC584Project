@@ -1,0 +1,120 @@
+---
+title: "**School Sanitation: Lessons from the COVID-19 Pandemic**"
+subtitle: "**Global Trends** and **Insights** from **2020**"
+author: "Emma Doogue"
+date: "2024-03-31"
+format: 
+  html: 
+      theme: zephyr
+      backgroundcolor: lightyellow
+      toc: true
+
+
+execute: 
+  echo: false
+  warning: false
+  message: false
+---
+## Introduction
+
+In **2020**, the world faced unprecedented challenges due to the **COVID-19 pandemic**, affecting various sectors, including **education. Basic sanitation in schools** is a fundamental right and it is a necessity for safe learning environments, as a result of the **pandemic sanitation** in **schools** came under **scrutiny**. This report delves into the state of basic sanitation in schools across different countries across the world over the years, with a focus on the period of **2020**.
+
+```{r}
+#| label: setup
+#| include: false
+
+#libraries
+library(tidyverse)
+library(plotly)
+
+#data
+unicef_indicator_1 <- read_csv("unicef_indicator_1.csv")
+unicef_metadata <- read_csv("unicef_metadata.csv")
+
+#transformations
+data_join <- unicef_metadata %>%
+  full_join(unicef_indicator_1, by = c("country", "year" = "time_period"))
+```
+
+## Global Overview
+
+```{r}
+#| fig-cap: "Our journey begins with a **global map visualisation**, showcasing the proportion of schools with **basic sanitation** from **2000** to **2020**. This comprehensive view highlights both **progress and setbacks** across different regions, setting the stage for a deeper investigation into how the pandemic might have influenced these trends. This map illustrates the **evolving landscape of basic sanitation in schools** worldwide, highlighting **progress** in some regions, persistent disparities, and the critical importance of **sustained efforts** leading up to and during the **COVID-19 pandemic**. *Note: There was no data provided for the countries shaded in grey*."
+
+map_world <- map_data("world")
+
+map_data_join <- full_join(unicef_indicator_1, map_world, by = c("country" = "region"))
+
+ggplot(map_data_join) + 
+  aes(x = long, y = lat, group = group, fill = obs_value) + 
+  geom_polygon() + 
+  scale_fill_gradient(low = "blue", high = "orange", name = "%PBSS") + 
+  labs(x = "Longitude", y = "Latitude", title = "Proportion of Schools with Basic Sanitation") + 
+  theme_void() +
+  theme(plot.background = element_rect(fill = "lightyellow"), axis.line = element_blank()) 
+```
+
+
+## A Decade in Review
+
+
+```{r}
+#| fig-cap: "Focusing on a select group of countries (**Germany, India, Niger, Mexico, and Afghanistan**), we observe the trajectory of **basic sanitation in schools** over the last decade. While **Germany** boasts a consistent **100%** rate, showcasing its robust infrastructure and commitment to student welfare, **Afghanistan** remains constant at **38.2%**, reflecting persistent challenges. In contrast, **Mexico** shows a decline in basic sanitation, raising concerns about deteriorating conditions. **India** and **Niger**, however, offer glimmers of hope with their upward trends, suggesting improvements in their educational environments. *Note: there is gaps in the data therefore leading to gaps in this time series.*"
+ p <- data_join %>%
+   filter(country %in% c("Germany", "India", "Niger", "Mexico", "Afghanistan"), year >= 2010 & year <= 2021) %>%
+   ggplot(aes(x = year, y = obs_value, group = country, colour = country)) +
+   geom_line() +
+   labs(x = "Year", y = "Value", title = "Time Series by Country") + 
+   theme(legend.position = "none") + 
+   theme(panel.background = element_rect(fill = "lightyellow"), plot.background = element_rect(fill = "lightyellow"))
+
+  
+ ggplotly(p)
+```
+
+## The Impact of GDP on Sanitation in 2020
+
+```{r}
+#| fig-cap: "We then narrow down to the pivotal year of **2020**, we explore the relationship between a country's economic status (measured by **GDP**) and the proportion of schools with **basic sanitation**. Our scatterplot for selected countries with an average **GDP of 0-50,000 USD** reveals a complex picture. It prompts us to question how economic health influences a country's ability to provide basic sanitation in schools, especially during a global health crisis.The scatterplot focuses on countries with a **GDP between 0 and 50,000 USD** to explore how varying economic statuses within a broad but defined range influence the provision of basic sanitation in schools, particularly in the context of the **diverse challenges** and **priorities** faced by these **nations** in **2020**."
+vis_3 <- data_join %>%
+  filter(year == 2020) %>%
+  group_by(country) %>%
+  summarise(
+    Avg_GDP_per_capita = mean(`GDP per capita (constant 2015 US$)`, na.rm = TRUE),
+    Obs_value_avg = mean(obs_value, na.rm = TRUE)
+  ) %>%
+  ggplot(aes(x = Obs_value_avg, y = Avg_GDP_per_capita, color = country)) +
+  geom_point() +
+  theme(legend.position = "none") +
+  coord_cartesian(ylim = c(0, 50000)) +
+  labs(
+    y = "Average GDP per capita (constant 2015 US$)",
+    x = "Average Obs Value",
+    title = "Average GDP per Capita by Country for 2020"
+  ) + theme(panel.background = element_rect(fill = "lightyellow"), plot.background = element_rect(fill = "lightyellow"))
+
+ggplotly(vis_3)
+```
+
+## Comparative Analysis in 2020
+
+```{r}
+#| fig-cap: "The final piece of our narrative is a **bar chart** comparing the average proportion of schools with basic sanitation in **2020** among our selected countries. This barchart is visually highlighting **differences** between **countries** and underscoring the varying levels of access to **essential hygiene facilities** within these **educational environments**."
+vis_4 <- data_join %>%
+  filter(year == 2020, country %in% c("Germany", "India", "Niger", "Mexico", "Afghanistan")) %>%
+  group_by(country) %>%
+  summarise(Avg_obs_value = mean(obs_value, na.rm = TRUE)) %>%
+  ggplot(aes(x = country, y = Avg_obs_value, fill = country)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(y = "Average Obs Value", x = "Country", title = "Average Obs Value by Country for 2020") +
+  theme(legend.position = "none") +
+  theme(panel.background = element_rect(fill = "lightyellow"), plot.background = element_rect(fill = "lightyellow"))
+
+ggplotly(vis_4)
+```
+
+## Conclusion
+
+The **COVID-19 pandemic** has underscored the critical importance of **basic sanitation in schools**, directly impacting students' health, well-being, and access to education. Our visualisations tell a story of varied responses and outcomes across different countries, influenced by **economic conditions, policy decisions**, and **infrastructure capabilities**. As we move forward, it becomes evident that ensuring basic sanitation in schools is not just a matter of health but a foundation for **educational equity** and **resilience** against future crises.
+
